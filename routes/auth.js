@@ -2,11 +2,11 @@ const Router = require('express');
 const { check } = require('express-validator');
 const { login, googleSignIn, loginToken, restablecerPassword } = require('../bml/controllers/auth');
 const { validarCampos } = require('../bml/middlewares/validar-campos');
-const { validarJWT } = require("../bml/middlewares/validar-jwt")
+const { validarJWT, renewJWT } = require("../bml/middlewares/validar-jwt")
 
 const router = Router();
 
-router.post('/', [check('email', 'El email es requerido').not().isEmpty(),
+router.post('/login', [check('email', 'El email es requerido').not().isEmpty(),
         check('password', 'El password es requerido').not().isEmpty(),
         validarCampos
     ],

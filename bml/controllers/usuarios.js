@@ -1,4 +1,6 @@
 const { query, querySingle, execute } = require('../../dal/data-access');
+const bcrypt = require('bcryptjs');
+
 
 //Obtener usuarios
 const getUsuarios = async(req, res) => {
@@ -46,6 +48,8 @@ const getUsuariosid = async(req, res) => {
 
 const addUsuario = async(req, res) => {
     const { nombre, email, password } = req.body;
+    const salt = bcrypt.genSaltSync();
+    const newPassword = bcrypt.hashSync(password, salt);
     const sqlParams = [{
             'name': 'nombre',
             'value': nombre
@@ -56,7 +60,7 @@ const addUsuario = async(req, res) => {
         },
         {
             'name': 'password',
-            'value': password
+            'value': newPassword
         },
         {
             'name': 'imagen',
@@ -72,13 +76,13 @@ const addUsuario = async(req, res) => {
         }
     ];
 
-    let rowsAffected = await execute('stp_usuarios_add', sqlParams);
-
-    if (rowsAffected != 0) {
+    rowsAffected = await querySingle('stp_usuarios_add', sqlParams);
+    console.log(rowsAffected);
+    if (rowsAffected) {
         res.json({
             status: true,
             message: 'Usuario agregado exitosamente',
-            data: 1
+            data: rowsAffected
         });
     } else {
         res.json({
@@ -156,7 +160,53 @@ const deleteUsuario = async(req, res) => {
     }
 }
 
+//reset usuario
+const cambiarPassword = async(req, res) => {
+    const { email, password } = req.body;
+    const sqlParam = [{
+        'name': 'email',
+        'value': email
+    }]
+    let usuario = await querySingle('stp_usuarios_login', sqlParam)
+    if (usuario) {
+        const salt = bcrypt.genSaltSync();
+        const newPassword = bcrypt.hashSync(password, salt);
+        const sqlParams = [{
+                'name': 'email',
+                'value': email
+            },
+            {
+                'name': 'password',
+                'value': newPassword
+            }
+        ]
+
+        let rowsAffected = await execute('stp_usuarios_reset', sqlParams);
+        if (rowsAffected != 0) {
+            res.json({
+                status: true,
+                message: 'Password updated successfully',
+                data: 1
+            });
+        } else {
+            res.json({
+                status: false,
+                message: 'An error occurred while updating the password',
+                data: 0
+            });
+        }
+    } else {
+        res.json({
+            status: false,
+            message: 'There is no user with that email',
+            data: null
+        })
+    }
+
+}
 
 
 
-module.exports = { getUsuarios, getUsuariosid, addUsuario, updateUsuario, deleteUsuario };
+
+
+module.exports = { getUsuarios, getUsuariosid, addUsuario, updateUsuario, deleteUsuario, cambiarPassword };

@@ -1,7 +1,10 @@
 const { querySingle } = require('../../dal/data-access');
 const { response } = require('../../routes/auth');
+const bcrypt = require('bcryptjs');
+const { generateJWT } = require('../helpers/jwt');
+const { googleVerify } = require('../helpers/google-verify');
 
-const login = async(req, res) => {
+const login = async(req, res = response) => {
     const { email, password } = req.body;
     let usuario = null;
     const sqlParams = [{
@@ -107,6 +110,9 @@ const googleSignIn = async(req, res = response) => {
             usuario = await querySingle('stp_usuarios_update', sqlParams);
         }
         const token = await generateJWT(usuario.idUsuario);
+        console.log(token);
+        console.log(usuario);
+
         res.json({
             status: true,
             message: 'Acceso por google correcto',
